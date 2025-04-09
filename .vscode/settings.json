@@ -1,0 +1,6 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.compile.nullAnalysis.mode": "disabled",
+    "CodeGPT.apiKey": "CodeGPT Plus Beta",
+    "cmake.sourceDirectory": "C:/school/VS code/Flutter/case/voicemed/windows/flutter"
+}
