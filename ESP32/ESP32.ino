@@ -11,8 +11,8 @@ U8G2_SH1106_128X64_NONAME_F_HW_I2C oled1(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 U8G2_SH1106_128X64_NONAME_F_HW_I2C oled2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
 // WiFi設定
-const char* ssid = "guineapigisme";
-const char* password = "hahahaha";
+const char* ssid = "CHT304";
+const char* password = "12345678";
 WebServer server(80);
 
 // 硬體腳位設定
@@ -38,6 +38,7 @@ bool lastButtonState = false;
 bool alarmActive = false;
 bool melodyPlaying = false;
 unsigned long buttonPressedTime = 0; //回傳TRY
+int lastTriggeredAlarmId = 0; //回傳TRY
 
 unsigned long alarmStartTime = 0;
 unsigned long lastToneToggle = 0;
@@ -97,19 +98,8 @@ void setup() {
   // 設置API端點
   server.on("/api/alarms", HTTP_POST, handleAlarmUpdate);
   server.on("/api/time", HTTP_GET, handleGetTime);
-  //回傳TRY：設定 Web API 路由-------------
-  server.on("/alarm/ack", HTTP_GET, [](AsyncWebServerRequest *request){
-    String response;
-    if (buttonPressed) {
-      response = "{\"status\": \"acknowledged\", \"timestamp\": " + String(buttonPressedTime) +
-                ", \"alarmId\": " + String(lastTriggeredAlarmId) + "}";
-    } else {
-      response = "{\"status\": \"pending\"}";
-    }
-    request->send(200, "application/json", response);
-  });
+  server.on("/alarm/ack", HTTP_GET, handleAlarmAck); //回傳TRY：設定 Web API 路由
 
-  //回傳TRY：設定 Web API 路由-------------
   server.begin();
 
   // 設定輸入輸出腳位
@@ -164,6 +154,17 @@ void loop() {
   }
   
   delay(100);
+}
+//回傳TRY：設定 Web API 路由
+void handleAlarmAck() {
+  String response;
+  if (buttonPressed) {
+    response = "{\"status\": \"acknowledged\", \"timestamp\": " + String(buttonPressedTime) +
+               ", \"alarmId\": " + String(lastTriggeredAlarmId) + "}";
+  } else {
+    response = "{\"status\": \"pending\"}";
+  }
+  server.send(200, "application/json", response);
 }
 
 // 新增音量測試的音調播放函數
