@@ -37,7 +37,7 @@ class MyThemes {
       color: Colors.black,
     ),
     dialogBackgroundColor: Color(0xFFEFF7CF),
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       titleTextStyle: TextStyle(
         color: Color(0xFF2A4747),
       ),
@@ -77,7 +77,7 @@ class MyThemes {
       color: Colors.white,
     ),
     dialogBackgroundColor: Color(0xFFEFF7CF),
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       titleTextStyle: TextStyle(
         color: Color(0xFF2A4747),
       ),
