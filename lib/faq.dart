@@ -249,7 +249,7 @@ class _FAQPageState extends State<FAQPage> {
                                 padding: EdgeInsets.all(12.0),
                                 decoration: BoxDecoration(
                                   color: isUser
-                                      ? Theme.of(context).colorScheme.background
+                                      ? Theme.of(context).colorScheme.surface
                                       : Colors.grey.shade200,
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),

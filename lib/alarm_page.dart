@@ -434,7 +434,7 @@ class _AlarmPageState extends State<AlarmPage> {
                                           });
                                         },
                                         value: alarm.isEnabled!,
-                                        activeColor: Colors.white,
+                                        activeThumbColor: Colors.white,
                                         activeTrackColor: Color(0xFF439775),
                                       )
                                     ],
@@ -584,7 +584,7 @@ class _AlarmPageState extends State<AlarmPage> {
                                                     });
                                                   },
                                                   value: _isRepeatSelected,
-                                                  activeColor: Colors.white,
+                                                  activeThumbColor: Colors.white,
                                                   activeTrackColor:
                                                       Color(0xFF439775),
                                                 ),

@@ -5,7 +5,7 @@ import 'ack_log.dart';
 import 'ack_log_helper.dart';
 
 class AckLogPage extends StatefulWidget {
-  const AckLogPage({Key? key}) : super(key: key);
+  const AckLogPage({super.key});
 
   @override
   State<AckLogPage> createState() => _AckLogPageState();

@@ -33,9 +33,7 @@ class AckLogHelper {
   
   Future<Database> get database async {
   // 將 await 移到這裡，確保回傳的是 Database 物件
-    if (_database == null) {
-      _database = _initializeDatabase();
-    }
+    _database ??= _initializeDatabase();
     return await _database!;
   }
 

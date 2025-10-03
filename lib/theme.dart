@@ -30,13 +30,12 @@ class MyThemes {
   static final lightTheme = ThemeData(
     scaffoldBackgroundColor: Colors.white,
     colorScheme: ColorScheme.light().copyWith(
-      background: Color(0xffEFF7CF),
+      surface: Color(0xffEFF7CF),
       primary: Color(0xFF2A4747),
     ),
     iconTheme: IconThemeData(
       color: Colors.black,
     ),
-    dialogBackgroundColor: Color(0xFFEFF7CF),
     dialogTheme: DialogThemeData(
       titleTextStyle: TextStyle(
         color: Color(0xFF2A4747),
@@ -70,13 +69,12 @@ class MyThemes {
   static final darkTheme = ThemeData(
     scaffoldBackgroundColor: Color(0xFF2A4747),
     colorScheme: ColorScheme.dark().copyWith(
-      background: Color(0xff439775),
+      surface: Color(0xff439775),
       primary: Color(0xFFEFF7CF),
     ),
     iconTheme: IconThemeData(
       color: Colors.white,
     ),
-    dialogBackgroundColor: Color(0xFFEFF7CF),
     dialogTheme: DialogThemeData(
       titleTextStyle: TextStyle(
         color: Color(0xFF2A4747),

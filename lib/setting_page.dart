@@ -250,7 +250,7 @@ class _ToggleThemeState extends State<ToggleTheme> {
             Transform.scale(
               scale: 0.7,
               child: CupertinoSwitch(
-                  activeColor: Color(0xFF439775),
+                  activeTrackColor: Color(0xFF439775),
                   value: themeProvider.isDarkMode,
                   onChanged: (bool value) {
                     final provider =
