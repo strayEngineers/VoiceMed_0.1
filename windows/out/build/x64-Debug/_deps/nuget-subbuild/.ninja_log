@@ -1,0 +1,24 @@
+# ninja log v6
+4	51	7820385673118357	nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-mkdir	541570cbf5463495
+4	51	7820385673118357	C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/_deps/nuget-subbuild/nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-mkdir	541570cbf5463495
+51	3334	7820385705947560	nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-download	6ab168d0d2af8172
+51	3334	7820385705947560	C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/_deps/nuget-subbuild/nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-download	6ab168d0d2af8172
+3335	3375	7820385706347599	nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-update	93e111e5cd5eda94
+3335	3375	7820385706347599	C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/_deps/nuget-subbuild/nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-update	93e111e5cd5eda94
+3375	3417	7820385706767555	nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-patch	e252c019f9c5accb
+3375	3417	7820385706767555	C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/_deps/nuget-subbuild/nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-patch	e252c019f9c5accb
+3417	3472	7820385707317556	nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-copyfile	c0291754e7893a67
+3417	3472	7820385707317556	C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/_deps/nuget-src/nuget.exe	c0291754e7893a67
+3417	3472	7820385707317556	C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/_deps/nuget-subbuild/nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-copyfile	c0291754e7893a67
+3472	3516	7820385707757553	nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-configure	50a472ccddc09026
+3472	3516	7820385707757553	C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/_deps/nuget-subbuild/nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-configure	50a472ccddc09026
+3516	3561	7820385708197554	nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-build	805d5434a0a07913
+3516	3561	7820385708197554	C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/_deps/nuget-subbuild/nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-build	805d5434a0a07913
+3561	3604	7820385708637555	nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-install	9dfc2e9e76e5acf
+3561	3604	7820385708637555	C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/_deps/nuget-subbuild/nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-install	9dfc2e9e76e5acf
+3604	3648	7820385709077556	nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-test	c1728319ca0a2c08
+3604	3648	7820385709077556	C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/_deps/nuget-subbuild/nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-test	c1728319ca0a2c08
+3648	3704	7820385709637556	CMakeFiles/nuget-populate-complete	5aaef0334b8651e9
+3648	3704	7820385709637556	nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-done	5aaef0334b8651e9
+3648	3704	7820385709637556	C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/_deps/nuget-subbuild/CMakeFiles/nuget-populate-complete	5aaef0334b8651e9
+3648	3704	7820385709637556	C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/_deps/nuget-subbuild/nuget-populate-prefix/src/nuget-populate-stamp/nuget-populate-done	5aaef0334b8651e9

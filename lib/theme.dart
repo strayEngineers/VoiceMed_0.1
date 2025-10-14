@@ -1,5 +1,4 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, use_super_parameters, use_build_context_synchronously, library_private_types_in_public_api, unnecessary_nullable_for_final_variable_declarations, unused_element, use_key_in_widget_constructors, annotate_overrides, avoid_print, use_full_hex_values_for_flutter_colors
-//開機畫面?
 import 'package:flutter/material.dart';
 import 'settings_service.dart';
 
@@ -30,13 +29,14 @@ class MyThemes {
   static final lightTheme = ThemeData(
     scaffoldBackgroundColor: Colors.white,
     colorScheme: ColorScheme.light().copyWith(
-      surface: Color(0xffEFF7CF),
+      background: Color(0xffEFF7CF),
       primary: Color(0xFF2A4747),
     ),
     iconTheme: IconThemeData(
       color: Colors.black,
     ),
-    dialogTheme: DialogThemeData(
+    dialogBackgroundColor: Color(0xFFEFF7CF),
+    dialogTheme: DialogTheme(
       titleTextStyle: TextStyle(
         color: Color(0xFF2A4747),
       ),
@@ -69,13 +69,14 @@ class MyThemes {
   static final darkTheme = ThemeData(
     scaffoldBackgroundColor: Color(0xFF2A4747),
     colorScheme: ColorScheme.dark().copyWith(
-      surface: Color(0xff439775),
+      background: Color(0xff439775),
       primary: Color(0xFFEFF7CF),
     ),
     iconTheme: IconThemeData(
       color: Colors.white,
     ),
-    dialogTheme: DialogThemeData(
+    dialogBackgroundColor: Color(0xFFEFF7CF),
+    dialogTheme: DialogTheme(
       titleTextStyle: TextStyle(
         color: Color(0xFF2A4747),
       ),

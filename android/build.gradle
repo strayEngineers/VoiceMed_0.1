@@ -18,12 +18,13 @@ tasks.register("clean", Delete) {
 }
 
 buildscript {
+    ext.kotlin_version = '1.9.0' // 或更新版本
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.0' // 必须 ≥8.1.0
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22"
+        classpath 'com.android.tools.build:gradle:8.1.0' // 升級到 8.1+
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }

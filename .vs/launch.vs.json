@@ -1,0 +1,13 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "dll",
+      "exe": "",
+      "project": "windows\\CMakeLists.txt",
+      "projectTarget": "audioplayers_windows_plugin.dll (plugins\\audioplayers_windows\\audioplayers_windows_plugin.dll)",
+      "name": "audioplayers_windows_plugin.dll (plugins\\audioplayers_windows\\audioplayers_windows_plugin.dll)"
+    }
+  ]
+}

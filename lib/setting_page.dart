@@ -3,7 +3,7 @@
 import "package:flutter/cupertino.dart";
 import "package:flutter/material.dart";
 import "package:provider/provider.dart";
-import 'gen_l10n/app_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'font_size.dart';
 import 'theme.dart';
@@ -250,7 +250,7 @@ class _ToggleThemeState extends State<ToggleTheme> {
             Transform.scale(
               scale: 0.7,
               child: CupertinoSwitch(
-                  activeTrackColor: Color(0xFF439775),
+                  activeColor: Color(0xFF439775),
                   value: themeProvider.isDarkMode,
                   onChanged: (bool value) {
                     final provider =

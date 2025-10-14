@@ -23,7 +23,7 @@ class _AckLogPageState extends State<AckLogPage> {
   }
 
   Future<void> _syncAndLoadData() async {
-    final espIP = "192.168.0.108"; 
+    const espIP = "192.168.0.108"; 
     await _ackLogHelper.fetchAndSaveAckFromESP(espIP); // 步驟 1: 數據同步（調用 Service 層）
     final allLogs = await _ackLogHelper.getAckLogs(); // 步驟 2: 獲取所有原始數據
     final Map<String, List<AckLog>> groupedLogs = {}; // 步驟 3: 初始化分組 Map

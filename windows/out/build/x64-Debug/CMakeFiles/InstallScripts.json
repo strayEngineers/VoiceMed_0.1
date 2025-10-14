@@ -1,0 +1,14 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/cmake_install.cmake",
+		"C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/flutter/cmake_install.cmake",
+		"C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/runner/cmake_install.cmake",
+		"C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/plugins/audioplayers_windows/cmake_install.cmake",
+		"C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/plugins/file_selector_windows/cmake_install.cmake",
+		"C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/plugins/permission_handler_windows/cmake_install.cmake",
+		"C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/plugins/flutter_local_notifications_windows/cmake_install.cmake",
+		"C:/Users/USER/Desktop/Codes/Products/voicemed_v2/windows/out/build/x64-Debug/plugins/flutter_local_notifications_windows/shared/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

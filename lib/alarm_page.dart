@@ -5,7 +5,7 @@ import "schedule_alarm.dart";
 import "theme_data.dart";
 import "alarm_info.dart";
 import "package:flutter/material.dart";
-import 'gen_l10n/app_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import "package:flutter_local_notifications/flutter_local_notifications.dart";
 import "package:intl/intl.dart";
 import "package:provider/provider.dart";
@@ -434,7 +434,7 @@ class _AlarmPageState extends State<AlarmPage> {
                                           });
                                         },
                                         value: alarm.isEnabled!,
-                                        activeThumbColor: Colors.white,
+                                        activeColor: Colors.white,
                                         activeTrackColor: Color(0xFF439775),
                                       )
                                     ],
@@ -584,7 +584,7 @@ class _AlarmPageState extends State<AlarmPage> {
                                                     });
                                                   },
                                                   value: _isRepeatSelected,
-                                                  activeThumbColor: Colors.white,
+                                                  activeColor: Colors.white,
                                                   activeTrackColor:
                                                       Color(0xFF439775),
                                                 ),
