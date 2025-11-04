@@ -26,6 +26,7 @@
 
 ---
 
+<a name="關於專案"></a>
 ## 🎯 關於專案
 
 ### 開發動機
@@ -44,6 +45,7 @@ VoiceMed 致力於解決長者和視障人士在藥物管理上的關鍵挑戰�
 
 ---
 
+<a name="核心功能"></a>
 ## ✨ 核心功能
 
 ### 🔊 藥袋掃描語音化
@@ -82,6 +84,7 @@ VoiceMed 致力於解決長者和視障人士在藥物管理上的關鍵挑戰�
 
 ---
 
+<a name="技術棧"></a>
 ## 🛠️ 技術棧
 
 ### 前端
@@ -107,6 +110,7 @@ VoiceMed 致力於解決長者和視障人士在藥物管理上的關鍵挑戰�
 - **語音合成**：Google TTS API
 - **LLM**：GPT API / 本地模型 + RAG
 
+<a name="主要依賴套件"></a>
 ### 主要依賴套件
 ```env
 dependencies:
@@ -124,6 +128,7 @@ shared_preferences: ^2.2.3
 
 ---
 
+<a name="系統架構"></a>
 ## 🏗️ 系統架構
 
 ```
@@ -151,8 +156,10 @@ MQTT/WebSocket
 
 ---
 
+<a name="快速開始"></a>
 ## 🚀 快速開始
 
+<a name="環境需求"></a>
 ### 環境需求
 
 - **Flutter SDK**: >= 3.3.4
@@ -161,8 +168,8 @@ MQTT/WebSocket
 - **Python**: >= 3.8（後端 API）
 - **Arduino IDE** / **PlatformIO**（ESP32 韌體）
 
+<a name="安裝步驟"></a>
 ### 安裝步驟
-
 
 ```bash
 # 1. Clone 專案
@@ -179,6 +186,7 @@ cp .env.example .env
 # 編輯 .env 填入 API 金鑰（Google Speech API 等）
 ```
 
+<a name="執行應用程式"></a>
 ### 執行應用程式
 
 #### 行動裝置 (Android/iOS)
@@ -198,6 +206,7 @@ pip install -r requirements.txt
 flask run
 ```
 
+<a name="硬體設定"></a>
 ### 硬體設定
 
 #### ESP32 智慧藥盒
@@ -226,6 +235,7 @@ wifiManager.autoConnect("VoiceMed-Setup");
 
 ---
 
+<a name="部署說明"></a>
 ## 📦 部署說明
 
 ### 生產環境架構
@@ -278,6 +288,7 @@ flask db upgrade
 
 ---
 
+<a name="技術挑戰與解決方案"></a>
 ## 🔧 技術挑戰與解決方案
 
 ### 1. **跨平台 IoT 整合**
@@ -332,6 +343,7 @@ flask db upgrade
 
 ---
 
+<a name="開發路線圖"></a>
 ## 🗺️ 開發路線圖
 
 - [ ] 多平台藥物交互作用資料庫
@@ -342,6 +354,7 @@ flask db upgrade
 
 ---
 
+<a name="貢獻指南"></a>
 ## 🤝 貢獻指南
 
 歡迎貢獻！請遵循以下步驟：
@@ -354,12 +367,14 @@ flask db upgrade
 
 ---
 
+<a name="授權條款"></a>
 ## 📄 授權條款
 
 本專案採用 MIT License - 詳見 [LICENSE](LICENSE) 檔案
 
 ---
 
+<a name="聯絡方式"></a>
 ## 📞 聯絡方式
 
 專案維護者：

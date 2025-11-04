@@ -26,6 +26,7 @@
 
 ---
 
+<a name="about-the-project"></a>
 ## 🎯 About the Project
 
 ### Motivation
@@ -44,6 +45,7 @@ VoiceMed was developed to address critical challenges faced by elderly and visua
 
 ---
 
+<a name="key-features"></a>
 ## ✨ Key Features
 
 ### 🔊 Voice-Enabled Prescription Scanning
@@ -82,6 +84,7 @@ VoiceMed was developed to address critical challenges faced by elderly and visua
 
 ---
 
+<a name="tech-stack"></a>
 ## 🛠️ Tech Stack
 
 ### Frontend
@@ -124,6 +127,7 @@ shared_preferences: ^2.2.3
 
 ---
 
+<a name="system-architecture"></a>
 ## 🏗️ System Architecture
 
 ```
@@ -157,8 +161,10 @@ Hardware/IoT Layer
 
 ---
 
+<a name="getting-started"></a>
 ## 🚀 Getting Started
 
+<a name="prerequisites"></a>
 ### Prerequisites
 
 - **Flutter SDK**: >= 3.3.4
@@ -167,6 +173,7 @@ Hardware/IoT Layer
 - **Python**: >= 3.8 (for backend API)
 - **Arduino IDE** / **PlatformIO** (for ESP32 firmware)
 
+<a name="installation"></a>
 ### Installation
 
 ```bash
@@ -184,6 +191,7 @@ cp .env.example .env
 # Edit .env with your API keys (Google Speech API, etc.)
 ```
 
+<a name="running-the-app"></a>
 ### Running the App
 
 #### Mobile (Android/iOS)
@@ -203,6 +211,7 @@ pip install -r requirements.txt
 flask run
 ```
 
+<a name="hardware-setup"></a>
 ### Hardware Setup
 
 #### ESP32 Smart Pillbox
@@ -231,6 +240,7 @@ wifiManager.autoConnect("VoiceMed-Setup");
 
 ---
 
+<a name="deployment"></a>
 ## 📦 Deployment
 
 ### Production Architecture
@@ -283,6 +293,7 @@ flask db upgrade
 
 ---
 
+<a name="technical-challenges"></a>
 ## 🔧 Technical Challenges & Solutions
 
 ### 1. **Cross-Platform IoT Integration**
@@ -337,6 +348,7 @@ flask db upgrade
 
 ---
 
+<a name="roadmap"></a>
 ## 🗺️ Roadmap
 
 - [ ] Multi-platform medication interaction database
@@ -347,6 +359,7 @@ flask db upgrade
 
 ---
 
+<a name="contributing"></a>
 ## 🤝 Contributing
 
 Contributions are welcome! Please follow these steps:
@@ -359,12 +372,14 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
+<a name="license"></a>
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
+<a name="contact"></a>
 ## 📞 Contact
 
 Project Maintainer: 
