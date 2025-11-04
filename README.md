@@ -1,4 +1,4 @@
-# VoiceMed - Smart Medication Management System
+# VoiceMed - Smart Pill Bag Integrated Pillbox System
 
 [![Static Badge](https://img.shields.io/badge/lang-en-red)](./README.md) [![Static Badge](https://img.shields.io/badge/lang-zh--tw-yellow)](./README.zh-tw.md) ![Flutter](https://img.shields.io/badge/Flutter-3.3.4-blue) ![License](https://img.shields.io/badge/License-MIT-green)
 

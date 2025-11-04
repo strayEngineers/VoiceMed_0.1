@@ -1,4 +1,4 @@
-# VoiceMed - 智慧藥物管理系統
+# 語音藥袋 VoiceMed - 智慧藥袋整合藥盒系統
 
 [![Static Badge](https://img.shields.io/badge/lang-en-red)](./README.md) [![Static Badge](https://img.shields.io/badge/lang-zh--tw-yellow)](./README.zh-tw.md) ![Flutter](https://img.shields.io/badge/Flutter-3.3.4-blue) ![License](https://img.shields.io/badge/License-MIT-green)
 
