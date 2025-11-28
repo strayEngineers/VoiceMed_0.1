@@ -247,7 +247,7 @@ class _MedicineSearchResultPageState extends State<MedicineSearchResultPage>
   }
 
   Future<void> _sendTextToAPI(String text) async {
-    final String apiUrl = "http://192.168.17.253:8080/";
+    final String apiUrl = "http://10.1.1.187:8080/";
     final fontSizeProvider = context.read<FontSizeProvider>();
 
     final Map<String, dynamic> data = {
