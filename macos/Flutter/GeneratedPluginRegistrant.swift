@@ -7,7 +7,7 @@ import Foundation
 
 import audioplayers_darwin
 import file_selector_macos
-import flutter_blue_plus_darwin
+import flutter_blue_plus
 import flutter_local_notifications
 import path_provider_foundation
 import shared_preferences_foundation

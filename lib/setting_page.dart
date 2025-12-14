@@ -177,6 +177,44 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
           ),
+          SizedBox(height: 5.0),
+          Divider(
+            height: 20 * fontSizeProvider.fontSize / 20,
+            color: Colors.grey,
+          ),
+          SizedBox(height: 5.0),
+          // 新增：藥盒連接選項
+          InkWell(
+            onTap: () {
+              Navigator.pushNamed(context, "/deviceConnection");
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.bluetooth_connected,
+                      size: 40 * fontSizeProvider.fontSize / 20,
+                    ),
+                    SizedBox(width: 10.0),
+                    Text(
+                      "藥盒連接",  // 若需多語言支援，可加入 l10n
+                      style: TextStyle(
+                        fontSize: fontSizeProvider.fontSize + 2,
+                        fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 30 * fontSizeProvider.fontSize / 20,
+                  color: Colors.grey,
+                ),
+              ],
+            ),
+          ),
         ]),
       ),
     );

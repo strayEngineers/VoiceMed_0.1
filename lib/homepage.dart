@@ -460,7 +460,7 @@ class _MyHomePageState extends State<MyHomePage> {
       );
 
       var request = http.MultipartRequest(
-          "POST", Uri.parse("http://192.168.17.253:8080/"));
+          "POST", Uri.parse("http://10.1.1.187:8080/"));
       request.files
           .add(await http.MultipartFile.fromPath("image", imageFile.path));
 

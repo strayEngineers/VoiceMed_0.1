@@ -15,6 +15,8 @@ import 'setting_page.dart';
 import 'locale.dart';
 import 'alarm_page.dart';
 import '/l10n/l10n.dart';
+import 'device_connection_page.dart';
+import 'wifi_setup_page.dart';
 import "faq.dart";
 import 'settings_service.dart';
 import "alarm_helper.dart";
@@ -112,6 +114,8 @@ class _MyAppState extends State<MyApp> {
         "/toggleTheme": (context) => ToggleTheme(),
         "/changeLanguage": (context) => ChangeLanguage(),
         "/changeFontSize": (context) => ChangeFontSize(),
+        "/deviceConnection": (context) => DeviceConnectionPage(),
+        "/wifiSetup": (context) => WifiSetupPage(),
         "/alarm": (context) => AlarmPage(),
         "/faq": (context) => FAQPage(),
       },
