@@ -59,16 +59,28 @@ class _WifiSetupPageState extends State<WifiSetupPage> {
     _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
       setState(() {
         // ✅ 使用 name 而不是 platformName（1.14.8 版本）
-        scanResults = results.where((r) => r.device.name.isNotEmpty).toList();
+        // scanResults = results.where((r) => r.device.name.isNotEmpty).toList();
+        scanResults = results; // fixing ble scan issue
+
+        // ✅ 在 Console 印出所有裝置資訊
+        for (var r in results) {
+          print("🔍 發現裝置:");
+          print("  名稱: ${r.device.name.isEmpty ? '(無名稱)' : r.device.name}");
+          print("  ID: ${r.device.id}");
+          print("  RSSI: ${r.rssi}");
+          print("  Services: ${r.advertisementData.serviceUuids}");
+        }
       });
     });
 
     try {
       await FlutterBluePlus.startScan(
         timeout: const Duration(seconds: 10),
+        androidUsesFineLocation: true,  // ✅ Android 12+ 必要
       );
     } catch (e) {
       _showSnackBar("掃描啟動失敗: $e");
+      print("❌ 掃描錯誤: $e");
     }
 
     await Future.delayed(const Duration(seconds: 10));
@@ -429,8 +441,20 @@ class _WifiSetupPageState extends State<WifiSetupPage> {
       physics: const NeverScrollableScrollPhysics(), // ✅ 不自己捲動，交給外層 SingleChildScrollView
       itemBuilder: (context, index) {
         final result = scanResults[index];
+
+        // ✅ 檢查是否是 VoiceMed 裝置
+        final isVoiceMed = result.advertisementData.serviceUuids.any(
+          (uuid) => uuid.toString().toLowerCase().contains("4fafc201")
+        );
+        
+        // ✅ 顯示名稱（空名稱也顯示）
+        final deviceName = result.device.name.isNotEmpty 
+            ? result.device.name 
+            : isVoiceMed ? "VoiceMed 藥盒 (未命名)" : "(未命名)";
+
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 4),
+          color: isVoiceMed ? Colors.green[50] : null,  // ✅ VoiceMed 用綠色背景
           child: ListTile(
             leading: Icon(
               Icons.devices,

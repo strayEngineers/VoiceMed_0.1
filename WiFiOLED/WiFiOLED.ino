@@ -32,7 +32,7 @@ const char* NVS_BTNAME_KEY = "btname";
 #define SERVICE_UUID           "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHAR_WIFI_UUID         "beb5483e-36e1-4688-b7f5-ea07361b26a8" 
 #define CHAR_BTNAME_UUID       "b3b3a001-3e00-4740-98d0-25032906e000" 
-#define CHAR_STATUS_UUID "c5c5c001-4e00-4740-98d0-25032906e001"  // 新增：狀態回報特徵
+#define CHAR_STATUS_UUID       "c5c5c001-4e00-4740-98d0-25032906e001"  // 新增：狀態回報特徵
 
 // NTP 相關設定
 WiFiUDP ntpUDP;
@@ -82,7 +82,6 @@ const unsigned long ALARM_TRIGGER_COOLDOWN = 60000;
 
 // 藍牙連線狀態旗標 (全域變數)
 bool bleConnected = false; 
-NimBLECharacteristic* pStatusChar = nullptr;  // 狀態特徵指標
 
 // =======================================================
 // OLED 設定 (雙 I2C / 分頁模式 _1)
@@ -95,6 +94,7 @@ String currentPassword = "";
 
 NimBLEServer* pServer = nullptr;
 NimBLEAdvertising* pAdvertising = nullptr;
+NimBLECharacteristic* pStatusChar = nullptr;  // 狀態特徵指標
 
 // =======================================================
 // 函數前置宣告
@@ -125,15 +125,37 @@ void playTone(int frequency, int duration, int volume);
 
 class ServerCallbacks : public NimBLEServerCallbacks {
     void onConnect(NimBLEServer* pServer, ble_gap_conn_desc* desc) {
-        ::bleConnected = true; 
-        Serial.println("BLE Client Connected.");
+        Serial.println("========================================");
+        Serial.println("📱 客戶端已連線！");
+        Serial.println("========================================");
+        bleConnected = true;
+        
+        // ✅ 連線後停止廣播（節省資源）
+        if (pAdvertising && pAdvertising->isAdvertising()) {
+            pAdvertising->stop();
+            Serial.println("🔇 已停止廣播");
+        }
     }
     
     void onDisconnect(NimBLEServer* pServer) {
-        ::bleConnected = false; 
+        Serial.println("========================================");
+        Serial.println("📱 客戶端已斷線");
+        Serial.println("========================================");
+        bleConnected = false;
         
-        Serial.println("BLE Client Disconnected. Restarting Advertising.");
-        pAdvertising->start(); 
+        // ✅ 斷線後重新開始廣播
+        if (currentState == BLE_CONFIG) {
+            delay(500);  // 等待一下再重新廣播
+            if (pAdvertising) {
+                pAdvertising->start();
+                Serial.println("🔊 重新開始廣播");
+            }
+        }
+    }
+
+    void onMTUChange(uint16_t MTU, ble_gap_conn_desc* desc) {
+        Serial.print("📏 MTU 已更新為: ");
+        Serial.println(MTU);
     }
 };
 
@@ -211,6 +233,9 @@ void setup() {
     Serial.println("========================================");
     Serial.println("VoiceMed2 Smart Pillbox Starting...");
     Serial.println("========================================");
+
+    // ✅ 設定 NimBLE 參數（在 init 之前）
+    NimBLEDevice::setPower(ESP_PWR_LVL_P9);  // 提高發射功率
 
     if (loadConfig()) {
         Serial.println("📂 WiFi config found, connecting...");
@@ -673,17 +698,40 @@ void saveWiFiConfig(const String& ssid, const String& password) {
 }
 
 void startBLEServer() {
-    Serial.println("BLE Server Started, advertising...");
+    Serial.println("📱 啟動藍牙配對模式...");
+  
+    // 1. 取得藍牙名稱
+    String btName = "VoiceMed2";
+    preferences.begin(NVS_NAMESPACE, true);
+    btName = preferences.getString(NVS_BTNAME_KEY, btName);
+    preferences.end();
+    
+    Serial.print("🔵 BLE Device Name: ");
+    Serial.println(btName);
+    
+    // 2. 初始化 NimBLE
+    NimBLEDevice::init(btName.c_str());
+    
+    // ✅ 3. 設定 MTU (可選，但有助於穩定性)
+    NimBLEDevice::setMTU(512);
 
+    // ✅ 設定 Security（有時候需要）
+    NimBLEDevice::setSecurityAuth(false, false, true);  // bonding=false, mitm=false, sc=true
+    NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
+
+    // 4. 建立 Server
     pServer = NimBLEDevice::createServer();
     pServer->setCallbacks(new ServerCallbacks());
 
+    // 5. 建立 Service
     NimBLEService* pService = pServer->createService(SERVICE_UUID);
 
-    NimBLECharacteristic* pWifiChar = pService->createCharacteristic(CHAR_WIFI_UUID, NIMBLE_PROPERTY::WRITE);
+    // 6. WiFi 設定特徵
+    NimBLECharacteristic* pWifiChar = pService->createCharacteristic(CHAR_WIFI_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
     pWifiChar->setCallbacks(new CharacteristicCallbacks());
 
-    NimBLECharacteristic* pBTNameChar = pService->createCharacteristic(CHAR_BTNAME_UUID, NIMBLE_PROPERTY::WRITE);
+    // 7. 藍牙名稱設定特徵
+    NimBLECharacteristic* pBTNameChar = pService->createCharacteristic(CHAR_BTNAME_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
     pBTNameChar->setCallbacks(new CharacteristicCallbacks());
 
     // 新增：狀態特徵（可讀取 + 可通知）
@@ -693,11 +741,45 @@ void startBLEServer() {
     );
     pStatusChar->setValue("READY");  // 初始狀態
 
+    // 8. 啟動服務
     pService->start();
     
-    pAdvertising = pServer->getAdvertising();
+    // ✅ 9. 設定廣播（關鍵！）
+    pAdvertising = NimBLEDevice::getAdvertising();
+    // pAdvertising = pServer->getAdvertising();
+
+    // ✅ 重要：加入 Service UUID
     pAdvertising->addServiceUUID(SERVICE_UUID);
+    
+    // ✅✅✅ 關鍵：明確設定要廣播完整名稱
+    NimBLEAdvertisementData advertisementData;
+    advertisementData.setName(btName.c_str());  // ← 這是關鍵！
+    advertisementData.setCompleteServices(NimBLEUUID(SERVICE_UUID));
+    advertisementData.setFlags(0x06);  // ✅ 關鍵：BR/EDR Not Supported + LE General Discoverable
+    pAdvertising->setAdvertisementData(advertisementData);
+    
+    // ✅ Scan Response Data（包含完整名稱）
+    NimBLEAdvertisementData scanResponseData;
+    scanResponseData.setName(btName.c_str());  // ← 再次確保名稱在 Scan Response
+    pAdvertising->setScanResponseData(scanResponseData);
+    
+    // ✅ 縮短廣播間隔（更容易被掃到）
+    pAdvertising->setMinInterval(100);  // 62.5ms
+    pAdvertising->setMaxInterval(200);  // 125ms
+    
+    // ✅ 設定 Appearance (可選)
+    pAdvertising->setAppearance(0x0340);
+    
+    // 10. 開始廣播
     pAdvertising->start();
+    
+    Serial.println("✅ BLE Server Started, advertising...");
+    Serial.println("👉 請在手機 APP 上進行掃描");
+    Serial.print("📡 廣播名稱: ");
+    Serial.println(btName);
+    Serial.print("📡 Service UUID: ");
+    Serial.println(SERVICE_UUID);
+    Serial.println("========================================");
 }
 
 void setDisplayStatus(const String& line1, const String& line2) {
