@@ -123,92 +123,94 @@ void playTone(int frequency, int duration, int volume);
 // BLE Callbacks 
 // =======================================================
 
+// Server 連線/斷線 Callback
 class ServerCallbacks : public NimBLEServerCallbacks {
-    void onConnect(NimBLEServer* pServer, ble_gap_conn_desc* desc) {
-        Serial.println("========================================");
-        Serial.println("📱 客戶端已連線！");
-        Serial.println("========================================");
+public:
+    void onConnect(NimBLEServer* pServer) {
+        Serial.println("\n========================================");
+        Serial.println("📱 [ServerCallback] 客戶端已連線！");
+        Serial.println("========================================\n");
         bleConnected = true;
-        
-        // ✅ 連線後停止廣播（節省資源）
-        if (pAdvertising && pAdvertising->isAdvertising()) {
-            pAdvertising->stop();
-            Serial.println("🔇 已停止廣播");
-        }
-    }
-    
-    void onDisconnect(NimBLEServer* pServer) {
-        Serial.println("========================================");
-        Serial.println("📱 客戶端已斷線");
-        Serial.println("========================================");
-        bleConnected = false;
-        
-        // ✅ 斷線後重新開始廣播
-        if (currentState == BLE_CONFIG) {
-            delay(500);  // 等待一下再重新廣播
-            if (pAdvertising) {
-                pAdvertising->start();
-                Serial.println("🔊 重新開始廣播");
-            }
-        }
     }
 
-    void onMTUChange(uint16_t MTU, ble_gap_conn_desc* desc) {
-        Serial.print("📏 MTU 已更新為: ");
-        Serial.println(MTU);
+    void onDisconnect(NimBLEServer* pServer) {
+        Serial.println("\n========================================");
+        Serial.println("📱 [ServerCallback] 客戶端已斷線");
+        Serial.println("========================================\n");
+        bleConnected = false;
     }
 };
 
+// 特徵讀寫 Callback
 class CharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+public:
     void onWrite(NimBLECharacteristic* pCharacteristic) {
-        String receivedData = pCharacteristic->getValue();
-        if (receivedData.length() == 0) return;
+        Serial.println("\n========================================");
+        Serial.println("📩 [CharCallback] 收到寫入請求！");
+        
+        std::string value = pCharacteristic->getValue();
+        String receivedData = String(value.c_str());
+        
+        Serial.print("  長度: ");
+        Serial.println(receivedData.length());
+        Serial.print("  內容: ");
+        Serial.println(receivedData);
+        
+        if (receivedData.length() == 0) {
+            Serial.println("  ⚠️ 空資料，忽略");
+            Serial.println("========================================\n");
+            return;
+        }
 
-        Serial.println("========================================");
-        Serial.println("📩 收到藍牙資料");
-
-        if (pCharacteristic->getUUID().toString() == CHAR_WIFI_UUID) {
-            Serial.println("📡 類型: WiFi 設定");
+        String charUUID = String(pCharacteristic->getUUID().toString().c_str());
+        Serial.print("  UUID: ");
+        Serial.println(charUUID);
+        
+        // WiFi 設定 (UUID: beb5483e-36e1-4688-b7f5-ea07361b26a8)
+        if (charUUID.indexOf("beb5483e") >= 0) {
+            Serial.println("  📡 類型: WiFi 設定");
+            
             int commaPos = receivedData.indexOf(',');
             if (commaPos > 0) {
                 String newSSID = receivedData.substring(0, commaPos);
                 String newPWD = receivedData.substring(commaPos + 1);
-
+                
                 Serial.print("  📶 SSID: ");
                 Serial.println(newSSID);
-                Serial.print("  🔐 密碼: ");
-                Serial.println(newPWD.length() > 0 ? "***已接收***" : "空密碼");
-
+                Serial.print("  🔐 密碼長度: ");
+                Serial.println(newPWD.length());
+                
                 saveWiFiConfig(newSSID, newPWD);
-                updateSystemState(WIFI_CONNECTING); 
+                
+                Serial.println("  ✅ 儲存完成，準備連線 WiFi");
+                Serial.println("========================================\n");
+                
+                delay(500);
+                updateSystemState(WIFI_CONNECTING);
             } else {
-            Serial.println("  ❌ 格式錯誤（應為: SSID,Password）");
-            } 
+                Serial.println("  ❌ 格式錯誤（應為: SSID,Password）");
+                Serial.println("========================================\n");
+            }
         }
-        else if (pCharacteristic->getUUID().toString() == CHAR_BTNAME_UUID) {
-            Serial.println("📡 類型: 藍牙名稱設定");
-            Serial.print("  📝 新名稱: ");
-            Serial.println(receivedData);
-
+        // 藍牙名稱設定 (UUID: b3b3a001-3e00-4740-98d0-25032906e000)
+        else if (charUUID.indexOf("b3b3a001") >= 0) {
+            Serial.println("  📡 類型: 藍牙名稱設定");
+            
             preferences.begin(NVS_NAMESPACE, false);
             preferences.putString(NVS_BTNAME_KEY, receivedData);
             preferences.end();
             
-            // 🚨 最終修正: 透過停止並重新啟動廣播來更新名稱
-            if (pAdvertising) {
-                pAdvertising->stop();
-            }
-            // 重新初始化 NimBLE 設備名稱
-            NimBLEDevice::init(receivedData.c_str());
-            
-            // 重新取得廣播實例並啟動
-            pAdvertising = NimBLEDevice::getAdvertising();
-            pAdvertising->start(); 
-            
-            setDisplayStatus("BT Name Saved", receivedData);
-            Serial.println("  ✅ 藍牙名稱已更新");
+            Serial.println("  ✅ 藍牙名稱已儲存");
+            Serial.println("========================================\n");
         }
-        Serial.println("========================================");
+        else {
+            Serial.println("  ⚠️ 未知的 UUID");
+            Serial.println("========================================\n");
+        }
+    }
+
+    void onRead(NimBLECharacteristic* pCharacteristic) {
+        Serial.println("📖 [CharCallback] 收到讀取請求");
     }
 };
 
@@ -274,6 +276,26 @@ void loop() {
     // 狀態機邏輯
     switch (currentState) {
         case BLE_CONFIG: {
+            // ✅ 手動檢查連線數量
+            if (pServer) {
+                int connCount = pServer->getConnectedCount();
+                
+                static int lastConnCount = 0;
+                if (connCount != lastConnCount) {
+                Serial.print("🔗 連線數變化: ");
+                Serial.print(lastConnCount);
+                Serial.print(" → ");
+                Serial.println(connCount);
+                lastConnCount = connCount;
+                
+                if (connCount > 0) {
+                    Serial.println("✅ 偵測到有裝置連線！");
+                } else {
+                    Serial.println("⚠️ 裝置已斷線");
+                }
+                }
+            }
+            
             break;
         }
             
@@ -368,63 +390,63 @@ void updateSystemState(SystemState newState) {
     
     // 清理舊模式的資源
     WiFi.disconnect(true);
-    // 使用 deinit() 徹底關閉藍牙，避免與 Wi-Fi 衝突
-    NimBLEDevice::deinit(); 
-    server.stop(); 
     
-    switch (newState) {
-        case BLE_CONFIG:
-            // loadConfig() 已經在 setup 中執行了 NimBLEDevice::init()
-            Serial.println("📱 啟動藍牙配對模式...");
-            startBLEServer();
-            setDisplayStatus("Mode: BLE Config", "Ready to Receive Config");
-            Serial.println("✅ 藍牙配對模式已就緒");
-            Serial.println("👉 請在手機 APP 上進行掃描");
-            break;
-            
-        case WIFI_CONNECTING:
-            Serial.println("📶 開始連線 WiFi...");
-            Serial.print("  SSID: ");
-            Serial.println(currentSSID);
-            WiFi.mode(WIFI_STA);
-            WiFi.begin(currentSSID.c_str(), currentPassword.c_str());
-            setDisplayStatus("Mode: Connecting", "SSID: " + currentSSID);
-            Serial.println("⏳ 等待連線中...");
-            // 重新啟動BLE以回報狀態
-            startBLEServer();
-            if (pStatusChar) pStatusChar->setValue("CONNECTING");
-            break;
-            
-        case WIFI_CONNECTED:
-            startBLEServer();
-            if (pStatusChar) {
-                String statusMsg = "CONNECTED:" + WiFi.localIP().toString();
-                pStatusChar->setValue(statusMsg.c_str());
-                pStatusChar->notify();  // 主動通知APP
-            }
-      
-            // 5秒後再關閉BLE，啟動WiFi服務
-            delay(5000);
-            NimBLEDevice::deinit();
+    // ✅ 如果要進入 BLE 模式，完全重新初始化
+    if (newState == BLE_CONFIG) {
+        // 清理舊的 BLE
+        if (pServer) {
+        NimBLEDevice::deinit(true);  // ✅ 完全清除
+        delay(100);
+        }
+        
+        Serial.println("📱 啟動藍牙配對模式...");
+        startBLEServer();
+        setDisplayStatus("Mode: BLE Config", "Ready to Receive Config");
+        Serial.println("✅ 藍牙配對模式已就緒");
+        Serial.println("👉 請在手機 APP 上進行掃描");
+    }
+    else if (newState == WIFI_CONNECTING) {
+        // 清理 BLE（切換到 WiFi 模式）
+        NimBLEDevice::deinit(true);
+        server.stop();
+        
+        Serial.println("📶 開始連線 WiFi...");
+        Serial.print("  SSID: ");
+        Serial.println(currentSSID);
+        WiFi.mode(WIFI_STA);
+        WiFi.begin(currentSSID.c_str(), currentPassword.c_str());
+        setDisplayStatus("Mode: Connecting", "SSID: " + currentSSID);
+        Serial.println("⏳ 等待連線中...");
+    }
+    else if (newState == WIFI_CONNECTED) {
+        startBLEServer();
+        if (pStatusChar) {
+            String statusMsg = "CONNECTED:" + WiFi.localIP().toString();
+            pStatusChar->setValue(statusMsg.c_str());
+            pStatusChar->notify();  // 主動通知APP
+        }
+    
+        // 5秒後再關閉BLE，啟動WiFi服務
+        delay(5000);
+        NimBLEDevice::deinit();
 
-            Serial.println("🎉 WiFi 連線成功！");
-            Serial.print("🌐 IP 位址: ");
-            Serial.println(WiFi.localIP());
+        Serial.println("🎉 WiFi 連線成功！");
+        Serial.print("🌐 IP 位址: ");
+        Serial.println(WiFi.localIP());
 
-            server.on("/api/alarms", HTTP_POST, handleAlarmUpdate);
-            server.on("/api/time", HTTP_GET, handleGetTime);
-            server.begin();
-            
-            Serial.println("🌐 Web Server 已啟動");
-            Serial.println("  → POST /api/alarms (設定鬧鐘)");
-            Serial.println("  → GET  /api/time   (取得時間)");
+        server.on("/api/alarms", HTTP_POST, handleAlarmUpdate);
+        server.on("/api/time", HTTP_GET, handleGetTime);
+        server.begin();
+        
+        Serial.println("🌐 Web Server 已啟動");
+        Serial.println("  → POST /api/alarms (設定鬧鐘)");
+        Serial.println("  → GET  /api/time   (取得時間)");
 
-            timeClient.begin();
-            timeClient.setTimeOffset(utcOffsetInSeconds);
-            
-            setDisplayStatus("Connection successful", "IP: " + WiFi.localIP().toString());
-            Serial.println("✅ 系統完全就緒");
-            break;
+        timeClient.begin();
+        timeClient.setTimeOffset(utcOffsetInSeconds);
+        
+        setDisplayStatus("Connection successful", "IP: " + WiFi.localIP().toString());
+        Serial.println("✅ 系統完全就緒");
     }
     Serial.println("==================================\n");
 }
@@ -700,7 +722,6 @@ void saveWiFiConfig(const String& ssid, const String& password) {
 void startBLEServer() {
     Serial.println("📱 啟動藍牙配對模式...");
   
-    // 1. 取得藍牙名稱
     String btName = "VoiceMed2";
     preferences.begin(NVS_NAMESPACE, true);
     btName = preferences.getString(NVS_BTNAME_KEY, btName);
@@ -709,76 +730,75 @@ void startBLEServer() {
     Serial.print("🔵 BLE Device Name: ");
     Serial.println(btName);
     
-    // 2. 初始化 NimBLE
+    // 初始化 NimBLE
     NimBLEDevice::init(btName.c_str());
-    
-    // ✅ 3. 設定 MTU (可選，但有助於穩定性)
     NimBLEDevice::setMTU(512);
-
-    // ✅ 設定 Security（有時候需要）
-    NimBLEDevice::setSecurityAuth(false, false, true);  // bonding=false, mitm=false, sc=true
+    NimBLEDevice::setSecurityAuth(false, false, true);
     NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
 
-    // 4. 建立 Server
+    // 建立 Server 並註冊 Callbacks
     pServer = NimBLEDevice::createServer();
     pServer->setCallbacks(new ServerCallbacks());
+    Serial.println("✅ Server Callbacks 已註冊");
 
-    // 5. 建立 Service
+    // 建立 Service
     NimBLEService* pService = pServer->createService(SERVICE_UUID);
+    Serial.println("✅ Service 已建立");
 
-    // 6. WiFi 設定特徵
-    NimBLECharacteristic* pWifiChar = pService->createCharacteristic(CHAR_WIFI_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
-    pWifiChar->setCallbacks(new CharacteristicCallbacks());
-
-    // 7. 藍牙名稱設定特徵
-    NimBLECharacteristic* pBTNameChar = pService->createCharacteristic(CHAR_BTNAME_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
-    pBTNameChar->setCallbacks(new CharacteristicCallbacks());
-
-    // 新增：狀態特徵（可讀取 + 可通知）
-    pStatusChar = pService->createCharacteristic(
-        CHAR_STATUS_UUID, 
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY
+    // WiFi 設定特徵
+    NimBLECharacteristic* pWifiChar = pService->createCharacteristic(
+        CHAR_WIFI_UUID, 
+        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE
     );
-    pStatusChar->setValue("READY");  // 初始狀態
+    pWifiChar->setCallbacks(new CharacteristicCallbacks());
+    Serial.println("✅ WiFi Characteristic 已建立並註冊 Callbacks");
 
-    // 8. 啟動服務
+    // 藍牙名稱設定特徵
+    NimBLECharacteristic* pBTNameChar = pService->createCharacteristic(
+        CHAR_BTNAME_UUID, 
+        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE
+    );
+    pBTNameChar->setCallbacks(new CharacteristicCallbacks());
+    Serial.println("✅ BTName Characteristic 已建立並註冊 Callbacks");
+
+    // 狀態特徵
+    if (pStatusChar == nullptr) {
+        pStatusChar = pService->createCharacteristic(
+            CHAR_STATUS_UUID, 
+            NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY
+        );
+        pStatusChar->setValue("READY");
+        Serial.println("✅ Status Characteristic 已建立");
+    }
+
+    // 啟動服務（關鍵！）
     pService->start();
+    Serial.println("✅ Service 已啟動");
     
-    // ✅ 9. 設定廣播（關鍵！）
+    // 開始廣播（關鍵！）
+    pServer->startAdvertising();
+    Serial.println("✅ 開始廣播（使用 pServer->startAdvertising()）");
+    
+    // 也可以用 pAdvertising 設定更多細節
     pAdvertising = NimBLEDevice::getAdvertising();
-    // pAdvertising = pServer->getAdvertising();
-
-    // ✅ 重要：加入 Service UUID
-    pAdvertising->addServiceUUID(SERVICE_UUID);
     
-    // ✅✅✅ 關鍵：明確設定要廣播完整名稱
     NimBLEAdvertisementData advertisementData;
-    advertisementData.setName(btName.c_str());  // ← 這是關鍵！
+    advertisementData.setName(btName.c_str());
     advertisementData.setCompleteServices(NimBLEUUID(SERVICE_UUID));
-    advertisementData.setFlags(0x06);  // ✅ 關鍵：BR/EDR Not Supported + LE General Discoverable
+    advertisementData.setFlags(0x06);
     pAdvertising->setAdvertisementData(advertisementData);
     
-    // ✅ Scan Response Data（包含完整名稱）
     NimBLEAdvertisementData scanResponseData;
-    scanResponseData.setName(btName.c_str());  // ← 再次確保名稱在 Scan Response
+    scanResponseData.setName(btName.c_str());
     pAdvertising->setScanResponseData(scanResponseData);
     
-    // ✅ 縮短廣播間隔（更容易被掃到）
-    pAdvertising->setMinInterval(100);  // 62.5ms
-    pAdvertising->setMaxInterval(200);  // 125ms
+    pAdvertising->setMinInterval(100);
+    pAdvertising->setMaxInterval(200);
     
-    // ✅ 設定 Appearance (可選)
-    pAdvertising->setAppearance(0x0340);
-    
-    // 10. 開始廣播
-    pAdvertising->start();
-    
-    Serial.println("✅ BLE Server Started, advertising...");
-    Serial.println("👉 請在手機 APP 上進行掃描");
-    Serial.print("📡 廣播名稱: ");
-    Serial.println(btName);
-    Serial.print("📡 Service UUID: ");
-    Serial.println(SERVICE_UUID);
+    Serial.println("✅ BLE Server 完全啟動");
+    Serial.println("📡 廣播名稱: " + btName);
+    Serial.println("📡 Service UUID: " + String(SERVICE_UUID));
+    Serial.println("👉 請從手機 APP 連線");
     Serial.println("========================================");
 }
 

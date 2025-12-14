@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -104,103 +103,103 @@ class _WifiSetupPageState extends State<WifiSetupPage> {
     });
 
     try {
+      print("🔵 開始連線至: ${device.name}");
+
+      // ✅ 先斷開舊連線
+      try {
+        await device.disconnect();
+        await Future.delayed(const Duration(milliseconds: 500));
+        print("🔌 已斷開舊連線");
+      } catch (e) {
+        print("⚠️ 斷線時發生錯誤: $e");
+      }
+
       // 1. 連線裝置
       await device.connect(timeout: const Duration(seconds: 10));
       _connectedDevice = device;
+      print("✅ 連線成功");
       
       setState(() {
         connectionStatus = "藍牙已連線，正在發現服務...";
       });
 
+      // 請求更大的 MTU（關鍵！）
+      try {
+          print("📏 請求 MTU: 512");
+          final mtu = await device.requestMtu(512);
+          await Future.delayed(const Duration(milliseconds: 500));  // 等待 MTU 協商
+          print("📏 新 MTU: $mtu");
+      } catch (e) {
+        print("⚠️ MTU 請求失敗（使用預設值）: $e");
+      }
+
       // 2. 發現服務
       List<BluetoothService> services = await device.discoverServices();
+      print("🔍 發現 ${services.length} 個服務");
 
       // 3. 找到目標服務
       BluetoothService? targetService;
-      try {
-        targetService = services.firstWhere(
-          (s) => s.uuid.toString().toLowerCase() == SERVICE_UUID.toLowerCase()
-        );
-      } catch (e) {
-        throw "找不到 VoiceMed 服務，請確認這是正確的裝置";
+      for (var service in services) {
+        print("  📦 Service: ${service.uuid}");
+        if (service.uuid.toString().toLowerCase().contains("4fafc201")) {
+          targetService = service;
+          print("    ✅ 這是 VoiceMed 服務！");
+          break;
+        }
+      }
+
+      if (targetService == null) {
+        throw Exception("找不到 VoiceMed 服務");
       }
 
       // 4. 找到特徵
       BluetoothCharacteristic? wifiChar;
-      BluetoothCharacteristic? statusChar;
-      
-      try {
-        wifiChar = targetService.characteristics.firstWhere(
-          (c) => c.uuid.toString().toLowerCase() == CHAR_WIFI_UUID.toLowerCase()
-        );
+      for (var char in targetService.characteristics) {
+        print("  📝 Characteristic: ${char.uuid}");
         
-        // 嘗試找狀態特徵（如果ESP32端已實作）
-        try {
-          statusChar = targetService.characteristics.firstWhere(
-            (c) => c.uuid.toString().toLowerCase() == CHAR_STATUS_UUID.toLowerCase()
-          );
-        } catch (e) {
-          print("狀態特徵未找到，將使用簡化流程");
-        }
-      } catch (e) {
-        throw "找不到 WiFi 設定特徵";
-      }
-
-      setState(() {
-        connectionStatus = "正在傳送 WiFi 設定...";
-      });
-
-      // 5. 訂閱狀態通知（如果有）
-      if (statusChar != null) {
-        await statusChar.setNotifyValue(true);
-        statusChar.value.listen((value) {
-          if (value.isNotEmpty) {
-            String status = utf8.decode(value);
-            setState(() => connectionStatus = status);
-
-            if (status.startsWith("CONNECTED:")) {
-              String ip = status.split(":").length > 1 ? status.split(":")[1] : "未知";
-              // ✅ 使用 name 而不是 platformName
-              _saveConnectionInfo(device.name, ip);
-              _showSnackBar("✅ WiFi 連線成功！IP: $ip");
-              
-              // 延遲後斷線並返回
-              Future.delayed(Duration(seconds: 2), () {
-                device.disconnect();
-                Navigator.pop(context, true);
-              });
-            }
-          }
-        });
-      }
-
-      // 6. 寫入 WiFi 憑證
-      String dataToSend = "${_ssidController.text},${_passwordController.text}";
-      await wifiChar.write(utf8.encode(dataToSend));
-
-      setState(() {
-        connectionStatus = "設定已傳送，等待藥盒連線 WiFi...";
-      });
-
-      // 7. 如果沒有狀態特徵，等待30秒後提示
-      if (statusChar == null) {
-        await Future.delayed(const Duration(seconds: 30));
-        if (mounted) {
-          _showSnackBar("⏰ 已傳送設定，請確認藥盒螢幕顯示連線狀態");
-          await device.disconnect();
-          Navigator.pop(context, false);
+        // ✅ WiFi UUID: beb5483e-36e1-4688-b7f5-ea07361b26a8
+        if (char.uuid.toString().toLowerCase().contains("beb5483e")) {
+          wifiChar = char;
+          print("    ✅ 這是 WiFi 設定特徵！");
+          break;
         }
       }
+
+      if (wifiChar == null) {
+        throw Exception("找不到 WiFi 設定特徵");
+      }
+
+      // 5. 寫入 WiFi 資料
+      String wifiData = "${_ssidController.text},${_passwordController.text}";
+      print("📤 準備發送 WiFi 資料: SSID=${_ssidController.text}");
+      
+      await wifiChar.write(wifiData.codeUnits, withoutResponse: false);
+      print("✅ WiFi 資料已發送");
+
+      // ✅ 6. 等待一下再斷線（讓 ESP32 有時間處理）
+      await Future.delayed(const Duration(seconds: 5));
+      print("⏰ 已等待 5 秒");
+
+      setState(() {
+        connectionStatus = "配置已發送，等待藥盒連線 WiFi...";
+      });
+
+      _showSnackBar("WiFi 配置已發送至藥盒");
+
+      // 7. 斷線
+      await device.disconnect();
+      print("🔌 已斷線");
 
     } catch (e) {
-      _showSnackBar("操作失敗: $e");
-      await device.disconnect();
+      print("❌ 連線或配置失敗: $e");
+      _showSnackBar("連線失敗: $e");
+      setState(() {
+        connectionStatus = "連線失敗";
+      });
     } finally {
-      if (mounted) {
-        setState(() {
-          isConnecting = false;
-        });
-      }
+      setState(() {
+        isConnecting = false;
+      });
     }
   }
 
