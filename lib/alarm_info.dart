@@ -7,6 +7,7 @@ class AlarmInfo {
   bool? isRepeating;
   bool? isEnabled;
   int? gradientColorIndex;
+  int? userid;
 
   AlarmInfo(
       {this.id,

@@ -89,6 +89,18 @@ class AlarmHelper {
     return alarmInfo;
   }
 
+  Future<List<AlarmInfo>> getAlarmsByUserId(int userId) async {
+    final db = await database;
+
+    // TODO: 正式版：where: 'user_id = ?'
+    final List<Map<String, dynamic>> maps = await db.query('alarm');
+
+    return List.generate(maps.length, (i) {
+      return AlarmInfo.fromMap(maps[i]);
+    });
+  }
+
+
   Future<int> delete(int? id) async {
     var db = await this.database;
     return await db.delete(tableAlarm, where: '$columnId = ?', whereArgs: [id]);

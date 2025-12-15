@@ -101,7 +101,7 @@ NimBLECharacteristic* pStatusChar = nullptr;  // 狀態特徵指標
 // =======================================================
 bool loadConfig();
 void saveWiFiConfig(const String& ssid, const String& password);
-void updateSystemState(SystemState newState);
+// void updateSystemState(SystemState newState);
 void startBLEServer();
 void handleAlarmUpdate();
 void handleGetTime();
@@ -186,7 +186,7 @@ public:
                 Serial.println("========================================\n");
                 
                 delay(500);
-                updateSystemState(WIFI_CONNECTING);
+                // updateSystemState(WIFI_CONNECTING);
             } else {
                 Serial.println("  ❌ 格式錯誤（應為: SSID,Password）");
                 Serial.println("========================================\n");
@@ -237,219 +237,247 @@ void setup() {
     Serial.println("========================================");
 
     // ✅ 設定 NimBLE 參數（在 init 之前）
-    NimBLEDevice::setPower(ESP_PWR_LVL_P9);  // 提高發射功率
+    // NimBLEDevice::setPower(ESP_PWR_LVL_P9);  // 提高發射功率
 
-    if (loadConfig()) {
-        Serial.println("📂 WiFi config found, connecting...");
-        updateSystemState(WIFI_CONNECTING); 
+    // if (loadConfig()) {
+    //     Serial.println("📂 WiFi config found, connecting...");
+    //     updateSystemState(WIFI_CONNECTING); 
+    // } else {
+    //     Serial.println("📂 No WiFi config, entering BLE mode...");
+    //     updateSystemState(BLE_CONFIG);
+    // }
+
+    // ✅ 寫死 WiFi 設定
+    currentSSID = "SDPM-LAB";        // ← 你的 WiFi SSID
+    currentPassword = "kl01kl01";            // ← 你的 WiFi 密碼
+    
+    Serial.println("📶 使用硬編碼 WiFi 設定");
+    Serial.print("  SSID: ");
+    Serial.println(currentSSID);
+    
+    // ✅ 使用測試程式的連線邏輯（已驗證可行）
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
+    delay(1000);
+    
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(currentSSID.c_str(), currentPassword.c_str());
+    
+    Serial.println("  等待連線中...");
+    
+    int attempts = 0;
+    while (WiFi.status() != WL_CONNECTED && attempts < 30) {
+        delay(500);
+        Serial.print(".");
+        attempts++;
+    }
+    
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("\n✅ WiFi 連線成功！");
+        Serial.print("🌐 IP: ");
+        Serial.println(WiFi.localIP());
+        
+        // 直接進入 WIFI_CONNECTED 狀態
+        currentState = WIFI_CONNECTED;
+        
+        // 啟動 Web Server
+        server.on("/api/alarms", HTTP_POST, handleAlarmUpdate);
+        server.on("/api/time", HTTP_GET, handleGetTime);
+        // ✅ 加上最簡單的測試端點
+        server.on("/", HTTP_GET, []() {
+            Serial.println("📨 收到根路徑請求");
+            server.send(200, "text/plain", "VoiceMed2 OK! IP: " + WiFi.localIP().toString());
+        });
+
+        server.on("/test", HTTP_GET, []() {
+            Serial.println("📨 收到 /test 請求");
+            server.send(200, "text/plain", "Test OK!");
+        });
+        server.begin();
+        Serial.println("🌐 Web Server 已啟動");
+        Serial.println("  → GET  /          (測試)");
+        Serial.println("  → GET  /test      (測試)");
+        Serial.println("  → GET  /api/time  (取得時間)");
+        Serial.println("  → POST /api/alarms (設定鬧鐘)");
+        
+        // 啟動 NTP
+        timeClient.begin();
+        timeClient.setTimeOffset(utcOffsetInSeconds);
+        
+        // 更新 OLED
+        setDisplayStatus("WiFi Connected", "IP: " + WiFi.localIP().toString());
+        
+        Serial.println("✅ 系統完全就緒");
     } else {
-        Serial.println("📂 No WiFi config, entering BLE mode...");
-        updateSystemState(BLE_CONFIG);
+        Serial.println("\n❌ WiFi 連線失敗");
+        currentState = BLE_CONFIG;
     }
 
+    Serial.println("========================================");
     Serial.println("✅ Setup complete");
 }
 
 void loop() {
-    // ✅ 每 5 秒輸出一次當前狀態
-    static unsigned long lastStatusPrint = 0;
-    if (millis() - lastStatusPrint > 5000) {
-        lastStatusPrint = millis();
-        Serial.println("========================================");
-        Serial.print("📍 Current State: ");
-        switch (currentState) {
-            case BLE_CONFIG: Serial.println("BLE_CONFIG (等待手機連線)"); break;
-            case WIFI_CONNECTING: Serial.println("WIFI_CONNECTING (連線中)"); break;
-            case WIFI_CONNECTED: Serial.println("WIFI_CONNECTED (已連線)"); break;
-        }
-        Serial.print("📶 WiFi Status: ");
-        Serial.println(WiFi.status() == WL_CONNECTED ? "已連線" : "未連線");
-        if (WiFi.status() == WL_CONNECTED) {
-        Serial.print("🌐 IP: ");
+  // ✅ 簡化版：只處理 WIFI_CONNECTED 狀態
+  if (currentState == WIFI_CONNECTED) {
+    // 每 10 秒檢查一次連線狀態
+    static unsigned long lastCheck = 0;
+    if (millis() - lastCheck > 10000) {
+      lastCheck = millis();
+      
+      if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("❌ WiFi 斷線，重啟...");
+        ESP.restart();  // 簡單粗暴：直接重啟
+      } else {
+        Serial.print("✅ WiFi OK | IP: ");
         Serial.println(WiFi.localIP());
-        }
-        Serial.print("📡 BLE Connected: ");
-        Serial.println(bleConnected ? "是" : "否");
-        Serial.println("========================================");
+      }
+    }
+    
+    // ✅ NTP 每 60 秒才更新一次（不阻塞）
+    static unsigned long lastNTPUpdate = 0;
+    if (millis() - lastNTPUpdate > 60000) {
+        lastNTPUpdate = millis();
+        Serial.println("⏰ 更新 NTP 時間...");
+        timeClient.update();
     }
 
-    // 狀態機邏輯
-    switch (currentState) {
-        case BLE_CONFIG: {
-            // ✅ 手動檢查連線數量
-            if (pServer) {
-                int connCount = pServer->getConnectedCount();
-                
-                static int lastConnCount = 0;
-                if (connCount != lastConnCount) {
-                Serial.print("🔗 連線數變化: ");
-                Serial.print(lastConnCount);
-                Serial.print(" → ");
-                Serial.println(connCount);
-                lastConnCount = connCount;
-                
-                if (connCount > 0) {
-                    Serial.println("✅ 偵測到有裝置連線！");
-                } else {
-                    Serial.println("⚠️ 裝置已斷線");
-                }
-                }
-            }
-            
-            break;
-        }
-            
-        case WIFI_CONNECTING: {
-            static unsigned long connectStartTime = 0;
-            static unsigned long lastDotTime = 0;
-            if (connectStartTime == 0) {
-                connectStartTime = millis();
-                lastDotTime = millis();
-            }
-
-            // ✅ 每秒輸出一個點，表示還在連線中
-            if (millis() - lastDotTime > 1000) {
-                lastDotTime = millis();
-                Serial.print(".");
-                if ((millis() - connectStartTime) % 10000 < 1000) {
-                Serial.print(" (");
-                Serial.print((millis() - connectStartTime) / 1000);
-                Serial.println("s)");
-                }
-            }
-
-            if (WiFi.status() == WL_CONNECTED) {
-                Serial.println("\n✅ WiFi 連線成功！");
-                updateSystemState(WIFI_CONNECTED);
-            } else if (millis() - connectStartTime > 30000) { 
-                Serial.println("Wi-Fi Connection Timeout. Switching to BLE Config.");
-                updateSystemState(BLE_CONFIG); 
-                connectStartTime = 0;
-            }
-            break;
-        }
-
-        case WIFI_CONNECTED: {
-            timeClient.update(); 
-            server.handleClient(); 
-            checkAlarms(); 
-            
-            updateTimeDisplay(); 
-            
-            // 可變電阻音量控制和測試邏輯
-            val = analogRead(anaPin);
-            int volume = map(val, 0, 4095, 0, 100);
-
-            if (abs(val - previousVal) > 5) {
-                previousVal = val;
-                displayVolume(volume);
-                
-                if (!alarmActive) {
-                    isTestingVolume = true;
-                    lastVolumeTestTime = millis();
-                    playTestTone(volume);
-                }
-            } else {
-                if (isTestingVolume && (millis() - lastVolumeTestTime > VOLUME_TEST_TIMEOUT)) {
-                    isTestingVolume = false;
-                    displayVoiceMed();
-                }
-            }
-
-            if (WiFi.status() != WL_CONNECTED) {
-                Serial.println("Wi-Fi Lost. Retrying...");
-                updateSystemState(WIFI_CONNECTING); 
-            }
-            break;
-        }
+    // 原本的功能
+    server.handleClient();
+    checkAlarms();
+    updateTimeDisplay();
+    
+    // 音量控制
+    val = analogRead(anaPin);
+    int volume = map(val, 0, 4095, 0, 100);
+    if (abs(val - previousVal) > 5) {
+      previousVal = val;
+      displayVolume(volume);
+      if (!alarmActive) {
+        isTestingVolume = true;
+        lastVolumeTestTime = millis();
+        playTestTone(volume);
+      }
+    } else {
+      if (isTestingVolume && (millis() - lastVolumeTestTime > VOLUME_TEST_TIMEOUT)) {
+        isTestingVolume = false;
+        displayVoiceMed();
+      }
     }
-    delay(10);
+    
+    // 按鈕檢查
+    if (alarmActive && digitalRead(buttonPin) == LOW && redLedOn) {
+      alarmActive = false;
+      digitalWrite(redLED, LOW);
+      oled2.clearBuffer();
+      oled2.setFont(u8g2_font_ncenB24_tr);
+      oled2.drawStr(30, 45, "OK!");
+      oled2.sendBuffer();
+      delay(500);
+      redLedOn = false;
+      displayVoiceMed();
+      delay(2000);
+    }
+  }
+  
+  delay(10);
 }
-
 
 // =======================================================
 // 狀態切換與管理
 // =======================================================
 
-void updateSystemState(SystemState newState) {
-    Serial.println("\n🔄 ========== 狀態切換 ==========");
-    Serial.print("從 ");
-    switch (currentState) {
-        case BLE_CONFIG: Serial.print("BLE_CONFIG"); break;
-        case WIFI_CONNECTING: Serial.print("WIFI_CONNECTING"); break;
-        case WIFI_CONNECTED: Serial.print("WIFI_CONNECTED"); break;
-    }
-    Serial.print(" → ");
-    switch (newState) {
-        case BLE_CONFIG: Serial.println("BLE_CONFIG"); break;
-        case WIFI_CONNECTING: Serial.println("WIFI_CONNECTING"); break;
-        case WIFI_CONNECTED: Serial.println("WIFI_CONNECTED"); break;
-    }
+// void updateSystemState(SystemState newState) {
+//     Serial.println("\n🔄 ========== 狀態切換 ==========");
+//     Serial.print("從 ");
+//     switch (currentState) {
+//         case BLE_CONFIG: Serial.print("BLE_CONFIG"); break;
+//         case WIFI_CONNECTING: Serial.print("WIFI_CONNECTING"); break;
+//         case WIFI_CONNECTED: Serial.print("WIFI_CONNECTED"); break;
+//     }
+//     Serial.print(" → ");
+//     switch (newState) {
+//         case BLE_CONFIG: Serial.println("BLE_CONFIG"); break;
+//         case WIFI_CONNECTING: Serial.println("WIFI_CONNECTING"); break;
+//         case WIFI_CONNECTED: Serial.println("WIFI_CONNECTED"); break;
+//     }
 
-    currentState = newState;
+//     currentState = newState;
     
-    // 清理舊模式的資源
-    WiFi.disconnect(true);
+//     // 清理舊模式的資源
+//     WiFi.disconnect(true);
     
-    // ✅ 如果要進入 BLE 模式，完全重新初始化
-    if (newState == BLE_CONFIG) {
-        // 清理舊的 BLE
-        if (pServer) {
-        NimBLEDevice::deinit(true);  // ✅ 完全清除
-        delay(100);
-        }
+//     // ✅ 如果要進入 BLE 模式，完全重新初始化
+//     if (newState == BLE_CONFIG) {
+//         // 清理舊的 BLE
+//         if (pServer) {
+//         NimBLEDevice::deinit(true);  // ✅ 完全清除
+//         delay(100);
+//         }
         
-        Serial.println("📱 啟動藍牙配對模式...");
-        startBLEServer();
-        setDisplayStatus("Mode: BLE Config", "Ready to Receive Config");
-        Serial.println("✅ 藍牙配對模式已就緒");
-        Serial.println("👉 請在手機 APP 上進行掃描");
-    }
-    else if (newState == WIFI_CONNECTING) {
-        // 清理 BLE（切換到 WiFi 模式）
-        NimBLEDevice::deinit(true);
-        server.stop();
+//         Serial.println("📱 啟動藍牙配對模式...");
+//         startBLEServer();
+//         setDisplayStatus("Mode: BLE Config", "Ready to Receive Config");
+//         Serial.println("✅ 藍牙配對模式已就緒");
+//         Serial.println("👉 請在手機 APP 上進行掃描");
+//     }
+//     else if (newState == WIFI_CONNECTING) {
+//         // 清理 BLE（切換到 WiFi 模式）
+//         NimBLEDevice::deinit(true);
+//         server.stop();
         
-        Serial.println("📶 開始連線 WiFi...");
-        Serial.print("  SSID: ");
-        Serial.println(currentSSID);
-        WiFi.mode(WIFI_STA);
-        WiFi.begin(currentSSID.c_str(), currentPassword.c_str());
-        setDisplayStatus("Mode: Connecting", "SSID: " + currentSSID);
-        Serial.println("⏳ 等待連線中...");
-    }
-    else if (newState == WIFI_CONNECTED) {
-        startBLEServer();
-        if (pStatusChar) {
-            String statusMsg = "CONNECTED:" + WiFi.localIP().toString();
-            pStatusChar->setValue(statusMsg.c_str());
-            pStatusChar->notify();  // 主動通知APP
-        }
+//         Serial.println("📶 開始連線 WiFi...");
+//         Serial.print("  SSID: ");
+//         Serial.println(currentSSID);
+
+//         // ✅ 完全重置 WiFi
+//         WiFi.disconnect(true);
+//         WiFi.mode(WIFI_OFF);
+//         delay(1000);
+        
+//         // ✅ 重新啟動 WiFi
+//         WiFi.mode(WIFI_STA);
+//         WiFi.setAutoReconnect(true);
+//         delay(500);
+        
+//         Serial.println("  🔌 WiFi 已重置，開始連線...");
+//         WiFi.begin(currentSSID.c_str(), currentPassword.c_str());
+//         Serial.println("  ✅ WiFi.begin() 已呼叫");
+//         setDisplayStatus("Mode: Connecting", "SSID: " + currentSSID);
+//         Serial.println("⏳ 等待連線中...");
+//     }
+//     else if (newState == WIFI_CONNECTED) {
+//         // startBLEServer();
+//         // if (pStatusChar) {
+//         //     String statusMsg = "CONNECTED:" + WiFi.localIP().toString();
+//         //     pStatusChar->setValue(statusMsg.c_str());
+//         //     pStatusChar->notify();  // 主動通知APP
+//         // }
     
-        // 5秒後再關閉BLE，啟動WiFi服務
-        delay(5000);
-        NimBLEDevice::deinit();
+//         // // 5秒後再關閉BLE，啟動WiFi服務
+//         // delay(5000);
+//         // NimBLEDevice::deinit();
 
-        Serial.println("🎉 WiFi 連線成功！");
-        Serial.print("🌐 IP 位址: ");
-        Serial.println(WiFi.localIP());
+//         Serial.println("🎉 WiFi 連線成功！");
+//         Serial.print("🌐 IP 位址: ");
+//         Serial.println(WiFi.localIP());
 
-        server.on("/api/alarms", HTTP_POST, handleAlarmUpdate);
-        server.on("/api/time", HTTP_GET, handleGetTime);
-        server.begin();
+//         server.on("/api/alarms", HTTP_POST, handleAlarmUpdate);
+//         server.on("/api/time", HTTP_GET, handleGetTime);
+//         server.begin();
         
-        Serial.println("🌐 Web Server 已啟動");
-        Serial.println("  → POST /api/alarms (設定鬧鐘)");
-        Serial.println("  → GET  /api/time   (取得時間)");
+//         Serial.println("🌐 Web Server 已啟動");
+//         Serial.println("  → POST /api/alarms (設定鬧鐘)");
+//         Serial.println("  → GET  /api/time   (取得時間)");
 
-        timeClient.begin();
-        timeClient.setTimeOffset(utcOffsetInSeconds);
+//         timeClient.begin();
+//         timeClient.setTimeOffset(utcOffsetInSeconds);
         
-        setDisplayStatus("Connection successful", "IP: " + WiFi.localIP().toString());
-        Serial.println("✅ 系統完全就緒");
-    }
-    Serial.println("==================================\n");
-}
+//         setDisplayStatus("Connection successful", "IP: " + WiFi.localIP().toString());
+//         Serial.println("✅ 系統完全就緒");
+//     }
+//     Serial.println("==================================\n");
+// }
 
 // =======================================================
 // 鬧鐘/Web Server API
@@ -484,16 +512,26 @@ void handleAlarmUpdate() {
 }
 
 void handleGetTime() {
-  timeClient.update();
-  StaticJsonDocument<256> doc;
-  doc["epoch"] = timeClient.getEpochTime();
-  doc["formattedTime"] = timeClient.getFormattedTime();
-  doc["status"] = "OK";
-  
-  String response;
-  serializeJson(doc, response);
-  server.send(200, "application/json", response);
+    Serial.println("📨 收到 /api/time 請求");
+    
+    // ✅ 不要每次都 update，太慢
+    // timeClient.update();  
+    
+    StaticJsonDocument<256> doc;
+    doc["epoch"] = timeClient.getEpochTime();
+    doc["formattedTime"] = timeClient.getFormattedTime();
+    doc["status"] = "OK";
+    doc["ip"] = WiFi.localIP().toString();  // ✅ 加上 IP 確認
+    
+    String response;
+    serializeJson(doc, response);
+    
+    Serial.print("📤 回應: ");
+    Serial.println(response);
+    
+    server.send(200, "application/json", response);
 }
+
 
 void checkAlarms() {
   timeClient.update();

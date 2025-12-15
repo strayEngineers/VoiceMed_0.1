@@ -21,6 +21,15 @@ class _DeviceConnectionPageState extends State<DeviceConnectionPage> {
   void initState() {
     super.initState();
     _loadConnectionStatus();
+
+    // ✅ 自動設定為已連線（因為 ESP32 寫死 WiFi）
+    Future.delayed(Duration(milliseconds: 500), () {
+      setState(() {
+        connectedDeviceName = "VoiceMed2 (固定配置)";
+        connectedDeviceIP = "192.168.x.x";  // ← 從 ESP32 Serial Monitor 複製實際 IP
+        isConnected = true;
+      });
+    });
   }
 
   Future<void> _loadConnectionStatus() async {

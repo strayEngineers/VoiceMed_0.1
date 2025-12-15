@@ -15,6 +15,7 @@ import "package:path_provider/path_provider.dart";
 import "package:flutter/material.dart";
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import "package:provider/provider.dart";
+import 'caregiver_page.dart';
 import "font_size.dart";
 import "util.dart";
 
@@ -332,6 +333,61 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                 ],
+              ),
+              Positioned(
+                top: 40,
+                left: 20,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CaregiverPage()),
+                      // MaterialPageRoute(builder: (context) => const CaregiverPage(caregiverId: 1))
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Color(0xff439775),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF439775).withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // ✅ 使用你的圖片
+                        Image.asset(
+                          "assets/image/caregiver.png",
+                          width: 30,
+                          height: 30,
+                          errorBuilder: (context, error, stackTrace) {
+                            // 圖片載入失敗時顯示預設 icon
+                            return const Icon(
+                              Icons.people,
+                              color: Colors.white,
+                              size: 24,
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '照護者',
+                          style: TextStyle(
+                            fontSize: fontSizeProvider.fontSize - 2,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
               Positioned(
                 top: 40,
