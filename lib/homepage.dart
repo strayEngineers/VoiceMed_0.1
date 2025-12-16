@@ -17,6 +17,8 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import "package:provider/provider.dart";
 import "font_size.dart";
 import "util.dart";
+//import 'ack_log_page.dart';
+//import 'ack_log.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -29,6 +31,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final AlarmHelper _alarmHelper = AlarmHelper();
   late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   late ScheduleAlarm scheduleAlarmHelper;
+  final String esp32IP = '192.168.17.175'; // 新增一個變數來保存 ESP32 的 IP 地址
 
   String? audioFilePathZh;
   String? audioFilePathEn;
@@ -42,7 +45,24 @@ class _MyHomePageState extends State<MyHomePage> {
     }).catchError((error) {
       print('database initialization error: $error');
     });
+
+    Future.microtask(() => _startEsp32Sync()); // 新增：在 UI 渲染完成後非同步執行 ESP32 同步
+
     super.initState();
+  }
+
+  // 處理 ESP32 同步的非同步方法
+  void _startEsp32Sync() async {
+    print('Starting ESP32 sync to $esp32IP...');
+    // 可以在這裡顯示一個提示訊息或載入指示器（可選，進階優化）
+    try {
+      await _alarmHelper.syncToESP32(esp32IP);
+      print('ESP32 sync complete.');
+      // 成功後可以考慮更新 UI (例如顯示一個「同步成功」的提示)
+    } catch (e) {
+    print('ESP32 Sync Failed: $e'); // 捕獲超時或其他錯誤
+    // 失敗後可以考慮顯示錯誤訊息給用戶
+    }
   }
 
   Future<void> _checkCameraPermission() async {
@@ -331,6 +351,50 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ],
                   ),
+
+                  // 服藥追蹤按鈕
+                  SizedBox(height: 20), // 新增：第二排和第三排之間的間距
+                  Row( // 新增：第三排按鈕
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // 服藥紀錄圖表按鈕
+                      InkWell(
+                        onTap: () {
+                        // 這裡使用您為 AckLogPage 設定的路由名稱
+                          Navigator.pushNamed(context, "/ackLog");
+                        },
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Container(
+                              width: 100 * fontSizeProvider.fontSize / 20,
+                              height: 100 * fontSizeProvider.fontSize / 20,
+                              decoration: BoxDecoration(
+                              color: Color(0xff439775),
+                              borderRadius:
+                              BorderRadius.all(Radius.circular(8))),
+                              child: Icon(
+                              Icons.bar_chart_rounded, // 選擇一個圖表相關的 Icon
+                              size: 80 * fontSizeProvider.fontSize / 20,
+                              color: Colors.white,
+                              ),
+                              ),
+                              SizedBox(height: 10),
+                              Text('服藥追蹤', // 這裡建議使用 AppLocalizations 進行多語系支援
+                              style: TextStyle(
+                              fontSize: fontSizeProvider.fontSize)),
+                              ],
+                            ),
+                          ),
+                          
+                          // 用以保持兩兩一排的對齊
+                          SizedBox(width: 40), 
+                          Container(
+                            width: 100 * fontSizeProvider.fontSize / 20,
+                            height: 0,
+                      ),
+                    ],
+                  ),
                 ],
               ),
               Positioned(
@@ -460,7 +524,7 @@ class _MyHomePageState extends State<MyHomePage> {
       );
 
       var request = http.MultipartRequest(
-          "POST", Uri.parse("http://192.168.17.253:8080/"));
+          "POST", Uri.parse("http://10.1.1.187:8080/"));
       request.files
           .add(await http.MultipartFile.fromPath("image", imageFile.path));
 

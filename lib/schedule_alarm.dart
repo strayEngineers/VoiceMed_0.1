@@ -57,9 +57,9 @@ class ScheduleAlarm {
           alarmInfo.title,
           tz.TZDateTime.from(scheduledNotificationDateTime, local),
           platformChannelSpecifics,
-          //這裡是舊版本的部分，依v15.0.0以前可以使用
-          //uiLocalNotificationDateInterpretation:
-          //    UILocalNotificationDateInterpretation.absoluteTime,
+          // 這裡是舊版本的部分，依v15.0.0以前可以使用
+          uiLocalNotificationDateInterpretation:
+             UILocalNotificationDateInterpretation.absoluteTime,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           matchDateTimeComponents: DateTimeComponents.time, // 每天重複
         );
@@ -71,9 +71,9 @@ class ScheduleAlarm {
           alarmInfo.title,
           tz.TZDateTime.from(scheduledNotificationDateTime, local),
           platformChannelSpecifics,
-          //這裡是舊版本的部分，依v15.0.0以前可以使用
-          //uiLocalNotificationDateInterpretation:
-          //    UILocalNotificationDateInterpretation.absoluteTime,
+          // 這裡是舊版本的部分，依v15.0.0以前可以使用
+          uiLocalNotificationDateInterpretation:
+             UILocalNotificationDateInterpretation.absoluteTime,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         );
         print('Scheduled one-time alarm');

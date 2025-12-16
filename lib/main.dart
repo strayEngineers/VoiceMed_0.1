@@ -17,7 +17,8 @@ import 'alarm_page.dart';
 import '/l10n/l10n.dart';
 import "faq.dart";
 import 'settings_service.dart';
-import "alarm_helper.dart";
+// import "alarm_helper.dart";
+import 'ack_log_page.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -75,9 +76,9 @@ Future<void> _initializeNotifications() async {
     debugPrint(notificationResponse.payload);
   });
 
-  final AlarmHelper alarmHelper = AlarmHelper();
-  const String esp32IP = '192.168.17.175';
-  await alarmHelper.syncToESP32(esp32IP);
+  //final AlarmHelper alarmHelper = AlarmHelper();
+  //const String esp32IP = '192.168.17.175';
+  //await alarmHelper.syncToESP32(esp32IP);
 }
 
 class MyApp extends StatefulWidget {
@@ -114,6 +115,7 @@ class _MyAppState extends State<MyApp> {
         "/changeFontSize": (context) => ChangeFontSize(),
         "/alarm": (context) => AlarmPage(),
         "/faq": (context) => FAQPage(),
+        "/ackLog": (context) => const AckLogPage(),
       },
       debugShowCheckedModeBanner: false,
     );
