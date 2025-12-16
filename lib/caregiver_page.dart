@@ -209,7 +209,10 @@ class _CaregiverPageState extends State<CaregiverPage> {
             onPressed: () {
               setState(() {});
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('重新載入資料...'), duration: Duration(seconds: 1)),
+                const SnackBar(content: Text('重新載入資料...'), duration: Duration(seconds: 5)),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('資料載入完畢！'), duration: Duration(seconds: 2)),
               );
             },
           ),
@@ -428,6 +431,25 @@ class PatientDetailPage extends StatefulWidget {
 
 class _PatientDetailPageState extends State<PatientDetailPage> {
   int selectedTabIndex = 0;
+  
+  // ✅ 新增鬧鐘用的變數
+  DateTime? _newAlarmTime;
+  late String _newAlarmTimeString;
+  bool _newIsRepeatSelected = false;
+  final TextEditingController _newTitleController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _newAlarmTime = DateTime.now();
+    _newAlarmTimeString = DateFormat('HH:mm').format(_newAlarmTime!);
+  }
+
+  @override
+  void dispose() {
+    _newTitleController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -449,6 +471,7 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
       ),
       body: Column(
         children: [
+          // Tab 切換按鈕
           Container(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -491,14 +514,300 @@ class _PatientDetailPageState extends State<PatientDetailPage> {
               ],
             ),
           ),
+          
+          // 內容區域
           Expanded(
             child: selectedTabIndex == 0
                 ? _buildAlarmList(fontSizeProvider, isLightTheme)
                 : _buildMedicationRecordList(fontSizeProvider, isLightTheme),
           ),
+          
+          // ✅ 新增鬧鐘按鈕（只在服藥鬧鐘 tab 顯示）
+          if (selectedTabIndex == 0)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isLightTheme ? Colors.white : const Color(0xFF1E1E1E),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _openCreateAlarmSheet,
+                  icon: Icon(Icons.add_alarm, size: fontSizeProvider.fontSize),
+                  label: Text(
+                    '新增鬧鐘',
+                    style: TextStyle(
+                      fontSize: fontSizeProvider.fontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF439775),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  // ✅ 打開新增鬧鐘的 bottom sheet
+  void _openCreateAlarmSheet() {
+    final fontSizeProvider = Provider.of<FontSizeProvider>(context, listen: false);
+
+    showModalBottomSheet(
+      useRootNavigator: true,
+      context: context,
+      clipBehavior: Clip.antiAlias,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 標題
+                  Text(
+                    '新增服藥鬧鐘',
+                    style: TextStyle(
+                      fontSize: fontSizeProvider.fontSize + 2,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 選時間
+                  TextButton(
+                    onPressed: () async {
+                      final selectedTime = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.fromDateTime(_newAlarmTime!),
+                        builder: (BuildContext context, Widget? child) {
+                          return Theme(
+                            data: ThemeData.light().copyWith(
+                              primaryColor: const Color(0xFF439775),
+                              colorScheme: const ColorScheme.light(
+                                primary: Color(0xFF439775),
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (selectedTime != null) {
+                        final now = DateTime.now();
+                        final selectedDateTime = DateTime(
+                          now.year,
+                          now.month,
+                          now.day,
+                          selectedTime.hour,
+                          selectedTime.minute,
+                        );
+                        _newAlarmTime = selectedDateTime;
+                        setModalState(() {
+                          _newAlarmTimeString = DateFormat('HH:mm').format(_newAlarmTime!);
+                        });
+                      }
+                    },
+                    child: Text(
+                      _newAlarmTimeString,
+                      style: TextStyle(
+                        fontSize: fontSizeProvider.fontSize + 8,
+                        color: const Color(0xFF439775),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // 是否每天
+                  ListTile(
+                    title: Text(
+                      '每天重複',
+                      style: TextStyle(fontSize: fontSizeProvider.fontSize - 2),
+                    ),
+                    trailing: Switch(
+                      activeTrackColor: const Color(0xFF439775),
+                      activeColor: Colors.white,
+                      value: _newIsRepeatSelected,
+                      onChanged: (value) {
+                        setModalState(() {
+                          _newIsRepeatSelected = value;
+                        });
+                      },
+                    ),
+                  ),
+
+                  // 標題
+                  ListTile(
+                    title: Text(
+                      '提醒內容',
+                      style: TextStyle(fontSize: fontSizeProvider.fontSize - 2),
+                    ),
+                    subtitle: Text(
+                      _newTitleController.text.isEmpty ? '點擊輸入' : _newTitleController.text,
+                      style: TextStyle(
+                        fontSize: fontSizeProvider.fontSize - 3,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 18),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (dialogContext) {
+                          return AlertDialog(
+                            title: Text(
+                              '輸入提醒標題',
+                              style: TextStyle(fontSize: fontSizeProvider.fontSize),
+                            ),
+                            content: TextField(
+                              controller: _newTitleController,
+                              cursorColor: const Color(0xFF439775),
+                              decoration: const InputDecoration(
+                                hintText: '例如：晚餐後服用降血壓藥',
+                                border: UnderlineInputBorder(),
+                              ),
+                              onChanged: (value) {
+                                setModalState(() {}); // 更新 subtitle
+                              },
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(dialogContext).pop(),
+                                child: Text(
+                                  '取消',
+                                  style: TextStyle(
+                                    color: const Color(0xFF439775),
+                                    fontSize: fontSizeProvider.fontSize - 2,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  setModalState(() {});
+                                  Navigator.of(dialogContext).pop();
+                                },
+                                child: Text(
+                                  '完成',
+                                  style: TextStyle(
+                                    color: const Color(0xFF439775),
+                                    fontSize: fontSizeProvider.fontSize - 2,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // 儲存按鈕
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _saveNewAlarm(context),
+                      icon: const Icon(Icons.check),
+                      label: Text(
+                        '儲存鬧鐘',
+                        style: TextStyle(
+                          fontSize: fontSizeProvider.fontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF439775),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ✅ 儲存新鬧鐘
+  Future<void> _saveNewAlarm(BuildContext bottomSheetContext) async {
+    // 時間往後補一天的邏輯
+    DateTime scheduleDateTime;
+    _newAlarmTime ??= DateTime.now().add(const Duration(days: 1));
+    if (_newAlarmTime!.isAfter(DateTime.now())) {
+      scheduleDateTime = _newAlarmTime!;
+    } else {
+      scheduleDateTime = _newAlarmTime!.add(const Duration(days: 1));
+    }
+
+    // 建立新的 AlarmInfo
+    final newAlarm = AlarmInfo(
+      alarmDateTime: scheduleDateTime,
+      gradientColorIndex: widget.patient.alarms.length % 5,
+      title: (_newTitleController.text.trim().isNotEmpty)
+          ? _newTitleController.text.trim()
+          : '服藥提醒',
+      isRepeating: _newIsRepeatSelected,
+      isEnabled: true,
+    );
+
+    // 寫入資料庫
+    final insertedId = await widget.alarmHelper.insertAlarm(newAlarm);
+    newAlarm.id = insertedId; // 設定ID
+
+    // 加入當前患者的鬧鐘列表
+    setState(() {
+      widget.patient.alarms.add(newAlarm);
+    });
+
+    if (!mounted) return;
+    Navigator.of(bottomSheetContext).pop(); // 關閉 bottom sheet
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✅ 已新增服藥鬧鐘'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    // 重置表單
+    _newTitleController.clear();
+    _newIsRepeatSelected = false;
+    _newAlarmTime = DateTime.now();
+    _newAlarmTimeString = DateFormat('HH:mm').format(_newAlarmTime!);
   }
 
   Widget _buildAlarmList(FontSizeProvider fontSizeProvider, bool isLightTheme) {
